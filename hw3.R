@@ -18,8 +18,6 @@ colnames(GeneAnnotation)[c(1,2)] <- c("HGNC_ID", "HGNC_Symbol")
 CountMatrix$HGNC_Symbol <- GeneAnnotation[match(CountMatrix$HGNC_Symbol, CountMatrix$HGNC_Symbol), external_gene_name]
 CountMatrix <- as.matrix(CountMatrix, rownames = "HGNC_Symbol")
 
-# wanted to get the sample metadata from here, but didnt manage manage at first
-series <- read_file("../../extdata/data/GSE20300_series_matrix.txt")
 
 # I think the data is log2 transformed -> we need to reverse the transformation
 CountMatrix <- 2^CountMatrix
@@ -65,26 +63,53 @@ ggplot(res_epic, aes(x = sample, y = proportion, fill = cell_type)) + geom_col(p
 # load real proportions
 load("../../extdata/data/hw3/kidneyTransplant.RData")
 cellFreq <- data.frame(cellFreq)
-cellFreq["patientGroup"] <- as.factor(patientGroups)
-names(cellFreq) <- c(cellNames, "patientGroup")
-cellFreq <- melt(as.data.table(cellFreq), id.vars = "patientGroup", variable.name = "cell_type", value.name = "proportion")
-levels(cellFreq$patientGroup) <- c("normal", "AR")
+cellFreq["group"] <- as.factor(patientGroups)
+names(cellFreq) <- c(cellNames, "group")
+cellFreq <- melt(as.data.table(cellFreq), id.vars = "group", variable.name = "cell_type", value.name = "proportion")
+levels(cellFreq$group) <- c("normal", "AR")
 
-ggplot(cellFreq, aes(x = patientGroup, y = proportion, fill = cell_type)) + geom_col(position = "fill")
-ggplot(cellFreq, aes(x = cell_type, y = proportion, fill = patientGroup)) + geom_col(position = "fill") 
+ggplot(cellFreq, aes(x = group, y = proportion, fill = cell_type)) + geom_col(position = "fill")
+ggplot(cellFreq, aes(x = cell_type, y = proportion, fill = group)) + geom_col(position = "fill") 
 
 
-## put all the data in one table
+
 ## quantiseq: combine cell types to lymphocytes
 levels(res_quantiseq$cell_type)[res_quantiseq$cell_type %in% c("B cell", "NK cell", 
                                                                "T cell regulatory (Tregs)",
                                                                "T cell CD4+ (non-regulatory)",
                                                                "T cell CD8+")] <- "Lymphocytes"
+## combine cell types to macrophages
 levels(res_quantiseq$cell_type)[res_quantiseq$cell_type %in% c("Macrophage M1", "Macrophage M2", "Monocyte")] <- "Monocytes"
+
+
+# to map sample to study group
 sample_desc = c("normal", "AR", "AR", "AR", "AR", "AR", "AR", "normal", "normal", "AR", "normal", "AR", "AR", "AR", "AR",
                 "normal", "normal", "normal", "normal", "AR", "AR", "AR", "normal","AR")
+
+
+## mapping samples to gorup
 tmp <- data.frame(cbind(levels(res_quantiseq$sample),sample_desc, deparse.level = 1))
 names(tmp) <- c("sample", "group")
 res_quantiseq <- merge(res_quantiseq, tmp, by = "sample", all.y = T)
 
+tmp <- data.frame(cbind(levels(res_xcell$sample),sample_desc, deparse.level = 1))
+names(tmp) <- c("sample", "group")
+res_xcell <- merge(res_xcell, tmp, by = "sample", all.y = T)
+
+tmp <- data.frame(cbind(levels(res_epic$sample),sample_desc, deparse.level = 1))
+names(tmp) <- c("sample", "group")
+res_epic <- merge(res_epic, tmp, by = "sample", all.y = T)
+
+
+
+
 ggplot(res_quantiseq, aes(group, proportion, fill = cell_type)) + geom_col(position = "fill") 
+
+##-------------------------------------------------------------
+## combine results tables with cellFreq (true proportions) 
+tables <- list(true_props = cellFreq, quanTIseq = res_quantiseq[,2:4], xCell = res_xcell[,2:4], epic = res_epic[,2:4] )
+
+## combine all data tables
+all_dt <- rbindlist(tables, idcol = "data", use.names = T)
+
+ggplot(all_dt, aes(group, proportion, fill = cell_type)) + geom_col(position = "fill") + facet_wrap(~data)
