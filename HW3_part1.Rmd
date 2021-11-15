@@ -1,0 +1,38 @@
+---
+title: "Systems BioMedicine Exercise 3 - Cancer Immunology"
+author: "Group 2"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Task 1: Questions
+1. Cancer is a disease in which cells multiply uncontrollably and destroy healthy tissue. --> True
+
+
+2. Cancer is a genetic disease. --> True
+
+
+3. Chemotherapy is a systemic form of treatment. --> True
+
+
+4. The main limitation of traditional cancer care modalities is related to the cost of the
+Treatments. --> False
+
+
+5. What is the job of the immune system? --> To fight diseases
+
+6. What is the major function of B cells? --> To produce antibodies
+
+
+7. The main limitation related to reference based deconvolution algorithms is:
+    - A reference matrix is needed that contains typical expression profiles of cell types. Thus, these algorithms are usually applicable only to well studied cell types with a lot of corroborated data. 
+    - Cell types of the studied environment need to be known beforehand, otherwise results may be inaccurate.
+    - The prior knowledge might not be appropriate when the deconvolution is performed by other data types such as proteomic profiles.
+
+8. The main limitation related to reference free deconvolution algorithms is:
+    - Discovered signatures may not be biologically relevant
+    - When the different components have been estimated from the data of different cell types, it could be problematic to label and interpret these different components.
