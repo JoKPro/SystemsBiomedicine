@@ -1,0 +1,153 @@
+---
+title: An R Markdown document converted from "../../extdata/data/hw4/exercise.ipynb"
+output: html_document
+---
+
+# Systems BioMedicine Lipidomics Exercise
+
+NOTE: __all__ functions you need to solve this exercise are imported below
+
+Required libraries:
+* pyteomics
+* scipy
+* bokeh
+* matplotlib
+
+```{python}
+from ms_utils import (
+    plot_spectrum_interactive,
+    plot_species,
+    plot_spectrum  # for saving as pdfs
+)
+from pyteomics import mzml
+from bokeh.plotting import show
+from scipy.signal import find_peaks, savgol_filter
+from scipy.ndimage import white_tophat
+from copy import deepcopy
+```
+
+## Spectral Processing
+
+* read the spectra stored in 'spectra.mzml'
+* find all spectra at which the collision energy used is 30 eV
+    * __hint__: collision energy is only relevant for MS2 spectra
+* process the last spectrum with a CE of 30 eV by applying
+    * Savitzky-Golay filtering
+    * White tophat base line correction
+    * These processing steps target the __intensity values__
+
+```{python}
+# reading spectra
+spectra = mzml.read("spectra.mzml")
+spectra_list = list(spectra)
+# visualising the spectra
+x = plot_species(spectra_list)
+```
+
+```{python}
+show(x)
+```
+
+```{python}
+# identifying spectra with CE 30eV
+ce_30 = []
+for i, spectrum in enumerate(spectra_list):
+    #print(spectrum.keys())
+    if "precursorList" in spectrum.keys() and (spectrum["precursorList"]["precursor"][0]["activation"]["collision energy"] == 30):
+        ce_30.append(spectrum)
+#print(ce_30)
+
+# we use the last one for further processing
+#spectrum = deepcopy(spectra_list[ce_30[-1]])
+spectrum = deepcopy(spectra_list[-1])
+```
+
+```{python}
+plot_spectrum(spectrum)
+```
+
+```{python}
+# smoothing
+intensity = spectrum["intensity array"]
+mz = spectrum['m/z array']
+intensity_hat = savgol_filter(intensity, window_length = 19, polyorder = 5)
+```
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+```
+
+```{python}
+plt.plot(mz, intensity)
+plt.plot(mz, intensity_hat, color = "red")
+plt.show()
+```
+
+```{python}
+spectrum["intensity array"] = intensity_hat
+```
+
+```{python}
+# baseline correction
+data = spectrum["intensity array"]
+struct_pts = int(round(data.size*0.01))
+str_el = np.repeat([1], struct_pts)
+intensity_processed = white_tophat(data, None, str_el)
+
+# NOTE: the final spectrum should be named 'spectrum_processed'
+spectrum["intensity array"] = intensity_processed
+spectrum_processed = deepcopy(spectrum)
+```
+
+```{python}
+intensity = spectrum_processed["intensity array"]
+plt.plot(mz, intensity)
+```
+
+## Lipid Identification
+
+* identify the (important) peaks in the processed spectrum
+* use the [alex123 database](alex123.info) to identify the lipid represented by this spectrum
+* some hints
+    * polarity is negative
+    * adduct is -H+
+    * you can find the __precursor mass__ in the spectrum dict => this will get you the __sum composition__
+    * use one __framgent peak__ together with the precursor mass to identify the __molecular compositon__
+* copy the fragments for the identified species from the database into the 'fragments' dictionary and plot the fragments on top of the spectrum to confirm your identification
+
+```{python}
+# Peak finding
+# HINT: good parameter ranges to start with are
+# 400 - 700 for peak height
+# 200 - 500 for threshold
+peaks = # TODO
+def print_peaks(spectrum, peaks):
+    for i, peak in enumerate(peaks):
+        print(f'Peak Nr. {i}: (m/z={spectrum["m/z array"][peak]}, intensity={spectrum["intensity array"][peak]})')
+
+print('Property-based Peaks')
+print_peaks(spectrum_processed, peaks)
+
+spectrum_peaks = plot_spectrum_interactive(
+    spectrum_processed, peaks=peaks
+)
+```
+
+```{python}
+# Lipid Identification
+fragments = {
+}
+
+fragment_plot = plot_species(
+    spectra=spectra,
+    fragments=fragments
+)
+show(fragment_plot)
+```
+
+### Bonus Question: Isotopic Ratios
+* find peaks where isotopologues are measured (~1 Da Intervals)
+    * you can use the peaks identified in the beginning of b)
+* get the intensities and plot the ratios between the different isotopologues
+
