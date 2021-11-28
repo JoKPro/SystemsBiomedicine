@@ -4,6 +4,7 @@ author: "Group 2"
 output:
   html_document:
     df_print: paged
+  word_document: default
   pdf_document:
     highlight: tango
 ---
@@ -51,7 +52,7 @@ They can identify novel genes and genomes, since they do not depend on reference
 
 ### Why is sequencing data compositional?
 
-The number of reads is several orders of magnitude smaller than the number of cells. With random sampling we get accurate proportions, but not exact counts.
+The number of reads is several orders of magnitude smaller than the number of cells. With random sampling we get accurate proportions, but not exact counts. Therefore we only know the relative abundance of reads.
 
 ### What characterizes microbial dysbiosis?
 
